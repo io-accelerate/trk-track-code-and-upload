@@ -1,7 +1,7 @@
 <configuration>
 
     <conversionRule conversionWord="color_by_level"
-                    converterClass="tdl.record_upload.logging.ColorByLevelCompositeConverter" />
+                    converterClass="io.accelerate.tracking.app.logging.ColorByLevelCompositeConverter" />
     <property name="ENABLE_JANSI_FLAG" value="${logback.enableJansi:-false}" />
   
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

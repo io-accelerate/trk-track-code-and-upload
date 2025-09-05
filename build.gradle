@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClass = "tdl.record_upload.RecordAndUploadApp"
+    mainClass = "io.accelerate.tracking.app.TrackCodeAndUploadApp"
 }
 
 group = 'io.accelerate'
@@ -24,77 +24,27 @@ repositories {
     mavenLocal()
 }
 
-// TODO strip out
 ext {
-    humbleVideoVersion = '0.2.1'
     jettyVersion = '9.4.7.v20170914'
-
-    humbleVideoBundleName="unset"
-    videoArch = project.getProperties().getOrDefault("videoArch", "unset")
-    switch (videoArch) {
-        case 'linux':
-            humbleVideoBundleName = "x86_64-pc-linux-gnu6"
-            break
-        case 'macos':
-            humbleVideoBundleName = "x86_64-apple-darwin12"
-            break
-        case 'windows':
-            humbleVideoBundleName = "x86_64-w64-mingw32"
-            break
-    }
 }
 
-
 dependencies {
-    implementation ('ro.ghionoiu:dev-sourcecode-record:0.0.25') {
-        exclude group: 'com.beust', module: 'jcommander'
-        exclude group: 'org.apache.httpcomponents'
-    }
-    implementation ('ro.ghionoiu:dev-screen-record:0.0.13') {
-        exclude group: 'com.beust', module: 'jcommander'
-        exclude group: 'org.apache.httpcomponents'
-    }
-    implementation ('ro.ghionoiu:s3-sync-stream:0.0.15') {
-        exclude group: 'com.beust', module: 'jcommander'
-    }
-    implementation('com.beust:jcommander:1.72')
+    implementation ('io.accelerate:code-track:0.0.36')
+    implementation ('io.accelerate:s3-sync-stream:0.0.18')
+    
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.788'
+    
+    implementation 'com.beust:jcommander:1.82'
     implementation('org.eclipse.jetty:jetty-server:'+jettyVersion)
     implementation('org.eclipse.jetty:jetty-servlet:'+jettyVersion)
     implementation('org.fusesource.jansi:jansi:1.8')
-    implementation('com.amazonaws:aws-java-sdk-s3:1.11.127')
 
-    implementation('org.slf4j:slf4j-api:1.7.25')
-    implementation('ch.qos.logback:logback-classic:1.1.3')
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'ch.qos.logback:logback-classic:1.5.13'
 
-    // Add the OS specific binaries
-    implementation 'io.humble:humble-video-noarch:'+humbleVideoVersion
-    if (humbleVideoBundleName != "unset") {
-        println 'Native video library humble-video '+humbleVideoBundleName+' - '+humbleVideoVersion+' will be bundled with the jar'
-        implementation 'io.humble:humble-video-arch-'+humbleVideoBundleName+':'+humbleVideoVersion
-        archivesBaseName = archivesBaseName + "-" + videoArch
-    }
-
-    // The needed modules to duff the Java 9 and higher modularisation runtime error messages:
-    // Java 9 and 10:
-    //       java.lang.NoClassDefFoundError: javax/xml/bind/JAXBException
-    //       java.lang.NoClassDefFoundError: javax/activation/JAXBException
-    //
-    // Java 11 and higher:
-    //      Error occurred during initialization of boot layer
-    //      java.lang.module.FindException: Module java.xml.bind not found
-    implementation('javax.xml.bind:jaxb-api:2.2.11')
-    implementation('javax.activation:activation:1.1.1')
-    implementation('org.apache.commons:commons-io:1.3.2')
-
-    testImplementation('org.junit.jupiter:junit-jupiter:5.9.1')
-    testImplementation('org.junit.platform:junit-platform-suite:1.8.1')
-    testImplementation 'org.hamcrest:hamcrest-all:1.3'
-    testImplementation 'org.mockito:mockito-core:4.11.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.11.0'
-
-    testImplementation 'org.hamcrest:hamcrest-core:1.3'
-    testImplementation 'org.hamcrest:hamcrest-library:1.3'
-    testImplementation 'com.mashape.unirest:unirest-java:1.4.9'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.junit.platform:junit-platform-suite:1.13.2'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
 }
 
 // Suppress Javadoc warnings
