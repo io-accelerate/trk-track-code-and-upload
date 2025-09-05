@@ -1,0 +1,52 @@
+
+group = 'io.accelerate'
+version = project.version.toString()
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+    withJavadocJar()
+}
+
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+ext {
+    jettyVersion = '9.4.7.v20170914'
+}
+
+dependencies {
+    implementation ('io.accelerate:code-track:0.0.36')
+    implementation ('io.accelerate:s3-sync-stream:0.0.18')
+
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.788'
+
+    implementation('org.eclipse.jetty:jetty-server:'+jettyVersion)
+    implementation('org.eclipse.jetty:jetty-servlet:'+jettyVersion)
+    implementation('org.fusesource.jansi:jansi:1.8')
+
+    implementation 'org.slf4j:slf4j-api:2.0.12'
+    implementation 'ch.qos.logback:logback-classic:1.5.13'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.junit.platform:junit-platform-suite:1.13.2'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+}
+
+
+// Suppress Javadoc warnings
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty("cucumber.junit-platform.naming-strategy", "long")
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}

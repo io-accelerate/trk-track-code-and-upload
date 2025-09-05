@@ -52,7 +52,7 @@ jobs:
         with:
           name: application-jar
           path: |
-            ./build/libs/*-all.jar
+            ./code-track-and-upload/build/libs/*-all.jar
   
   
   # ~~~~~~~~~~~~~ Release section, only triggered for v* tags ~~~~~~~~~~~~~~~~

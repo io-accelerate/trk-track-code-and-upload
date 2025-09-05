@@ -1,2 +1,2 @@
-rootProject.name = 'trk-code-track-and-upload'
-
+include 'build-logic'
+include 'code-track-and-upload'

@@ -1,0 +1,12 @@
+plugins {
+    id('java')
+    id('application')
+    id('com.github.johnrengelman.shadow') version '8.1.1'
+}
+
+application {
+    mainClass = "io.accelerate.tracking.app.TrackCodeAndUploadApp"
+}
+
+apply from: project(':build-logic').file('shared.gradle')
+apply from: project(':build-logic').file('application.gradle')

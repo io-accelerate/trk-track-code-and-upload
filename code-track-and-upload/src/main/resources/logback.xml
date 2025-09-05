@@ -1,0 +1,22 @@
+<configuration>
+
+    <conversionRule conversionWord="color_by_level"
+                    converterClass="io.accelerate.tracking.app.logging.ColorByLevelCompositeConverter" />
+    <property name="ENABLE_JANSI_FLAG" value="${logback.enableJansi:-false}" />
+  
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- On Windows machines setting withJansi to true enables ANSI
+         color code interpretation by the Jansi library. This requires
+         org.fusesource.jansi:jansi:1.8 on the class path.  Note that
+         Unix-based operating systems such as Linux and Mac OS X
+         support ANSI color codes by default. -->
+        <withJansi>${ENABLE_JANSI_FLAG}</withJansi>
+        <encoder>
+            <pattern>%color_by_level(%-5level %-12([%thread])) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

@@ -6,7 +6,7 @@ Command-line tool that records the screen as Fragmented MP4 and upload the fragm
 
 ### Download
 
-Download the `record-and-upload-PLATFORM.jar` from `https://github.com/julianghionoiu/record-and-upload/releases/latest`
+Download the `code-track-and-upload.jar` from `https://github.com/io-accelerate/trk-code-track-and-upload/releases/latest`
 
 ### Configure
 
@@ -29,9 +29,7 @@ s3_prefix=prefix/
 This will crate a maven based Jar that will download the required dependencies before running the app:
 
 ```bash
-./gradlew shadowJar -i -PvideoArch=macos
-./gradlew shadowJar -i -PvideoArch=windows
-./gradlew shadowJar -i -PvideoArch=linux
+./gradlew shadowJar -i
 ```
 
 ## Development - Testing
@@ -47,7 +45,7 @@ Run the test suite with Gradle:
 
 Run the self-test on the generated jar file:
 ```bash
-java -jar build/libs/record-and-upload-macos-*-SNAPSHOT.jar --run-self-test
+java -jar build/libs/track-code-and-upload-*-SNAPSHOT.jar --run-self-test
 ```
 
 ### Minimum disk requirement tests
