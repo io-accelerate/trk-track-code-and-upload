@@ -3,7 +3,10 @@
     <conversionRule conversionWord="color_by_level"
                     converterClass="io.accelerate.tracking.app.logging.ColorByLevelCompositeConverter" />
     <property name="ENABLE_JANSI_FLAG" value="${logback.enableJansi:-false}" />
-  
+
+    <!-- Disable logback internal status logs -->
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- On Windows machines setting withJansi to true enables ANSI
          color code interpretation by the Jansi library. This requires
@@ -19,4 +22,11 @@
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
+
+    <!-- Logger for AWS SDK -->
+    <logger name="com.amazonaws" level="warn"/>
+
+    <!-- Optional: You can also add other loggers for other noisy libraries -->
+    <logger name="org.apache.http" level="warn"/>
+
 </configuration>
