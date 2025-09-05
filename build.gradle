@@ -1,33 +1,30 @@
 
 plugins {
-    // Ref here: https://docs.gradle.org/7.4.1/userguide/publishing_setup.html
-    id 'application'
-    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id('java')
+    id('application')
+    id('com.github.johnrengelman.shadow') version '8.1.1'
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+application {
+    mainClass = "tdl.record_upload.RecordAndUploadApp"
+}
 
-group = 'ro.ghionoiu'
+group = 'io.accelerate'
 version = project.version.toString()
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    withSourcesJar()
+    withJavadocJar()
+}
 
 repositories {
     mavenCentral()
     mavenLocal()
 }
 
-/**
- * Design:
- * Humble-video is composed of two jar files _noarch + native.
- * The _noarch contains the API while the native jar contains
- * the JNI libraries required to interface with the Native codecs
- *
- * So:
- * - the capsule is configured to only download the artifact required for that platform
- * - the test includes all the native libraries to be cross-platform
- * - there is no native library configured for the compile target
- */
+// TODO strip out
 ext {
     humbleVideoVersion = '0.2.1'
     jettyVersion = '9.4.7.v20170914'
@@ -46,6 +43,7 @@ ext {
             break
     }
 }
+
 
 dependencies {
     implementation ('ro.ghionoiu:dev-sourcecode-record:0.0.25') {
@@ -99,6 +97,11 @@ dependencies {
     testImplementation 'com.mashape.unirest:unirest-java:1.4.9'
 }
 
+// Suppress Javadoc warnings
+javadoc {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
 test {
     useJUnitPlatform()
     systemProperty("cucumber.junit-platform.naming-strategy", "long")
@@ -107,29 +110,14 @@ test {
     }
 }
 
-mainClassName = "tdl.record_upload.RecordAndUploadApp"
 jar {
     manifest {
-        attributes 'Main-Class': mainClassName
+        attributes 'Main-Class': "$application.mainClass"
     }
-}
-
-java {
-    withSourcesJar()
-    withJavadocJar()
-}
-
-// Suppress Javadoc warnings
-javadoc {
-    options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 shadowJar {
     manifest {
-        attributes 'Main-Class': "$mainClassName"
-        attributes 'Humble-Native-Paths': "."
-        attributes 'Humble-Native-Bundles': "$humbleVideoBundleName"
-        attributes 'Humble-Native-App': "humble-video"
-        attributes 'Humble-Native-Root': "."
+        attributes 'Main-Class': "$application.mainClass"
     }
 }
