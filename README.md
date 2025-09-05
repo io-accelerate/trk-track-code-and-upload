@@ -6,7 +6,7 @@ Command-line tool that records the screen as Fragmented MP4 and upload the fragm
 
 ### Download
 
-Download the `code-track-and-upload.jar` from `https://github.com/io-accelerate/trk-code-track-and-upload/releases/latest`
+Download the `track-code-and-upload.jar` from `https://github.com/io-accelerate/trk-code-track-and-upload/releases/latest`
 
 ### Configure
 
@@ -45,7 +45,7 @@ Run the test suite with Gradle:
 
 Run the self-test on the generated jar file:
 ```bash
-java -jar code-track-and-upload/build/libs/code-track-and-upload-*-all.jar --run-self-test
+java -jar track-code-and-upload/build/libs/code-track-and-upload-*-all.jar --run-self-test
 ```
 
 ### To build artifacts in Github

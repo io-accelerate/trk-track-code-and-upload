@@ -20,8 +20,8 @@ ext {
 }
 
 dependencies {
-    implementation ('io.accelerate:code-track:0.0.36')
-    implementation ('io.accelerate:s3-sync-stream:0.0.18')
+    implementation ('io.accelerate:track-code:0.0.37')
+    implementation ('io.accelerate:sync-to-s3:0.0.24')
 
     implementation 'com.amazonaws:aws-java-sdk-s3:1.12.788'
 
