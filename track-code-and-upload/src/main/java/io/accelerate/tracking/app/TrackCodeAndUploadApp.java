@@ -210,11 +210,11 @@ public class TrackCodeAndUploadApp {
 
         // Start the metrics reporting
         MetricsReportingTask metricsReportingTask = new MetricsReportingTask(monitoredSubjects);
-        metricsReportingTask.scheduleReportMetricsEvery(Duration.of(2, ChronoUnit.SECONDS));
+        metricsReportingTask.scheduleReportMetricsEvery(Duration.of(3, ChronoUnit.SECONDS));
 
         // Start the health check thread
         HealthCheckTask healthCheckTask = new HealthCheckTask(serviceThreadsToStop);
-        healthCheckTask.scheduleHealthCheckEvery(Duration.of(2, ChronoUnit.SECONDS));
+        healthCheckTask.scheduleHealthCheckEvery(Duration.of(3, ChronoUnit.SECONDS));
         externalEventServerThread.addStopListener(eventPayload -> healthCheckTask.cancel());
 
         // Start the event server

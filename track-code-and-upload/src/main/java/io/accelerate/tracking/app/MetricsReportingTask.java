@@ -14,11 +14,13 @@ class MetricsReportingTask {
     private final Timer metricsTimer;
     private final StringBuilder displayBuffer;
     private final List<MonitoredSubject> monitoredSubjects;
+    private int tick;
 
     MetricsReportingTask(List<MonitoredSubject> monitoredSubjects) {
         this.metricsTimer = new Timer("Metrics");
         this.displayBuffer = new StringBuilder();
         this.monitoredSubjects = monitoredSubjects;
+        this.tick = 0;
     }
 
     void scheduleReportMetricsEvery(Duration delayBetweenRuns) {
@@ -43,18 +45,19 @@ class MetricsReportingTask {
 
     private void displayMetrics() {
         displayBuffer.setLength(0);
+        displayBuffer.append(String.format("tick %4d", tick));
+        tick ++;
+        
         for (MonitoredSubject monitoredSubject : monitoredSubjects) {
             if (monitoredSubject.isActive()) {
-                if (displayBuffer.length() > 0) {
+                if (!displayBuffer.isEmpty()) {
                     displayBuffer.append(" | ");
                 }
 
                 monitoredSubject.displayMetrics(displayBuffer);
             }
         }
-        if(displayBuffer.length() > 0){
-            log.info(displayBuffer.toString());
-        }
+        log.info(displayBuffer.toString());
     }
 
     void cancel() {

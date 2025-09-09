@@ -29,7 +29,7 @@ s3_prefix=prefix/
 This will crate a maven based Jar that will download the required dependencies before running the app:
 
 ```bash
-./gradlew shadowJar -i
+./gradlew clean shadowJar -i
 ```
 
 ## Development - Testing
@@ -45,7 +45,7 @@ Run the test suite with Gradle:
 
 Run the self-test on the generated jar file:
 ```bash
-java -jar track-code-and-upload/build/libs/code-track-and-upload-*-all.jar --run-self-test
+java -jar track-code-and-upload/build/libs/track-code-and-upload-*-all.jar --run-self-test
 ```
 
 ### To build artifacts in Github
