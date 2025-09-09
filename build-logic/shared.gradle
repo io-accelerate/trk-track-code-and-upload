@@ -17,14 +17,17 @@ repositories {
 
 ext {
     jettyVersion = '9.4.7.v20170914'
+    awsSdkVersion = '2.20.7'
 }
 
 dependencies {
     implementation ('io.accelerate:track-code:0.0.37')
-    implementation ('io.accelerate:sync-to-s3:0.0.24')
+    implementation ('io.accelerate:sync-to-s3:0.0.26')
 
-    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.788'
-
+    implementation('software.amazon.awssdk:s3:'+awsSdkVersion)
+    implementation('software.amazon.awssdk:auth:'+awsSdkVersion)
+    implementation('software.amazon.awssdk:regions:'+awsSdkVersion)
+    
     implementation('org.eclipse.jetty:jetty-server:'+jettyVersion)
     implementation('org.eclipse.jetty:jetty-servlet:'+jettyVersion)
     implementation('org.fusesource.jansi:jansi:1.8')

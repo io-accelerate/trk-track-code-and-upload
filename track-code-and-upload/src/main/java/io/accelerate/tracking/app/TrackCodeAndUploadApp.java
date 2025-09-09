@@ -3,21 +3,20 @@ package io.accelerate.tracking.app;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import io.accelerate.tracking.app.upload.*;
 import io.accelerate.tracking.code.record.SourceCodeRecorder;
 import org.slf4j.Logger;
 import io.accelerate.tracking.app.events.ExternalEventServerThread;
 import io.accelerate.tracking.app.logging.LockableFileLoggingAppender;
 import io.accelerate.tracking.app.sourcecode.NoOpSourceCodeThread;
 import io.accelerate.tracking.app.sourcecode.SourceCodeRecordingThread;
-import io.accelerate.tracking.app.upload.BackgroundRemoteSyncTask;
-import io.accelerate.tracking.app.upload.NoOpDestination;
-import io.accelerate.tracking.app.upload.UploadStatsProgressStatus;
 import io.accelerate.tracking.app.util.DiskSpaceUtil;
 import io.accelerate.tracking.sync.credentials.AWSSecretProperties;
-import io.accelerate.tracking.sync.sync.destination.Destination;
-import io.accelerate.tracking.sync.sync.destination.DestinationOperationException;
-import io.accelerate.tracking.sync.sync.destination.S3BucketDestination;
 import io.accelerate.tracking.sync.sync.progress.UploadStatsProgressListener;
+import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +84,7 @@ public class TrackCodeAndUploadApp {
         checkDiskspaceRequirements(params.minimumRequiredDiskspaceInGB);
 
         if (params.runSelfTest) {
-            S3BucketDestination.runSanityCheck();
+            runS3SanityCheck();
             SourceCodeRecorder.runSanityCheck();
             log.info("~~~~~~ Self test completed successfully ~~~~~~");
             return;
@@ -100,7 +99,7 @@ public class TrackCodeAndUploadApp {
 
             // Prepare remote destination
             boolean syncFolder = !params.doNotSync;
-            Destination uploadDestination;
+            RemoteDestination uploadDestination;
             if (syncFolder) {
                 AWSSecretProperties awsSecretProperties = AWSSecretProperties
                         .fromPlainTextFile(Paths.get(params.configFile));
@@ -186,7 +185,7 @@ public class TrackCodeAndUploadApp {
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static void run(String localStorageFolder,
-                            Destination remoteDestination,
+                            RemoteDestination remoteDestination,
                             MonitoredBackgroundTask sourceCodeRecordingTask) throws Exception {
         List<Stoppable> serviceThreadsToStop = new ArrayList<>();
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
@@ -303,6 +302,21 @@ public class TrackCodeAndUploadApp {
                     .forEach(File::delete);
         } catch (IOException e) {
             log.error("Failed to clean old locks", e);
+        }
+    }
+
+    public static void runS3SanityCheck() {
+        // Touch S3 to fail fast if the service is unreachable in this environment.
+        // Using anonymous creds mirrors the v1 “null creds” idea without needing real IAM.
+        try (S3Client s3 = S3Client.builder()
+                .region(Region.EU_WEST_2)
+                .credentialsProvider(AnonymousCredentialsProvider.create())
+                .build()) {
+
+            // Cheapest probe
+            s3.headBucket(HeadBucketRequest.builder()
+                    .bucket("ping.s3.accelerate.io")
+                    .build());
         }
     }
 }

@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import io.accelerate.tracking.sync.sync.Filters;
 import io.accelerate.tracking.sync.sync.RemoteSync;
 import io.accelerate.tracking.sync.sync.Source;
-import io.accelerate.tracking.sync.sync.destination.Destination;
 import io.accelerate.tracking.sync.sync.progress.UploadStatsProgressListener;
 
 import java.nio.file.Paths;
@@ -19,12 +18,12 @@ import static org.slf4j.LoggerFactory.*;
 public class BackgroundRemoteSyncTask {
     private static final Logger log = getLogger(BackgroundRemoteSyncTask.class);
     private final Timer syncTimer;
-    private Lock syncLock;
+    private final Lock syncLock;
     private final RemoteSync remoteSync;
 
     public BackgroundRemoteSyncTask(String localStorageFolder,
-                             Destination remoteDestination,
-                             UploadStatsProgressListener uploadStatsProgressListener) {
+                                    RemoteDestination remoteDestination,
+                                    UploadStatsProgressListener uploadStatsProgressListener) {
         Filters filters = Filters.getBuilder()
                 .include(Filters.endsWith(".mp4"))
                 .include(Filters.endsWith(".log"))
@@ -34,7 +33,10 @@ public class BackgroundRemoteSyncTask {
                 .setFilters(filters)
                 .create();
 
-        remoteSync = new RemoteSync(localFolder, remoteDestination);
+        remoteSync = new RemoteSync(localFolder,
+                remoteDestination.getClient(), 
+                remoteDestination.getS3Bucket(), 
+                remoteDestination.getS3Prefix());
         remoteSync.setListener(uploadStatsProgressListener);
 
         syncTimer = new Timer("Upload");
