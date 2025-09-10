@@ -1,37 +1,25 @@
 package io.accelerate.tracking.app;
 
-import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterDescription;
 import com.beust.jcommander.ParameterException;
+import io.accelerate.tracking.app.logging.LocalFileLogging;
 import io.accelerate.tracking.app.upload.*;
 import io.accelerate.tracking.code.record.SourceCodeRecorder;
 import org.slf4j.Logger;
-import io.accelerate.tracking.app.events.ExternalEventServerThread;
-import io.accelerate.tracking.app.logging.LockableFileLoggingAppender;
 import io.accelerate.tracking.app.sourcecode.NoOpSourceCodeThread;
 import io.accelerate.tracking.app.sourcecode.SourceCodeRecordingThread;
 import io.accelerate.tracking.app.util.DiskSpaceUtil;
 import io.accelerate.tracking.sync.credentials.AWSSecretProperties;
-import io.accelerate.tracking.sync.sync.progress.UploadStatsProgressListener;
-import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadBucketRequest;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 import static org.slf4j.LoggerFactory.*;
 
@@ -113,8 +101,7 @@ public class TrackCodeAndUploadApp {
         checkDiskspaceRequirements(params.minimumRequiredDiskspaceInGB);
 
         if (params.runSelfTest) {
-            runS3SanityCheck();
-            SourceCodeRecorder.runSanityCheck();
+            SelfTestAction.run();
             log.info("~~~~~~ Self test completed successfully ~~~~~~");
             return;
         }
@@ -123,7 +110,8 @@ public class TrackCodeAndUploadApp {
             // Prepare source folder
             createMissingParentDirectories(params.localStorageFolder);
             removeOldLocks(params.localStorageFolder);
-            startFileLogging(params.localStorageFolder);
+            LocalFileLogging localFileLogging = new LocalFileLogging(params.localStorageFolder);
+            localFileLogging.start();
 
 
             // Prepare remote destination
@@ -162,12 +150,16 @@ public class TrackCodeAndUploadApp {
             }
 
             // Start processing
-            run(params.localStorageFolder,
+            TrackAndUploadAction.run(params.localStorageFolder,
                     params.listeningHost,
-                    params.listeningPort, 
+                    params.listeningPort,
+                    localFileLogging,
                     uploadDestination,
                     sourceCodeRecordingTask
             );
+
+            // Stop the additional file logging
+            localFileLogging.stop();
 
             // Stop the S3 Sync session from above
             log.info("Stop S3 Sync session");
@@ -222,100 +214,8 @@ public class TrackCodeAndUploadApp {
     }
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
-    private static void run(String localStorageFolder,
-                            String listeningHost, int listeningPort, RemoteDestination remoteDestination,
-                            MonitoredBackgroundTask sourceCodeRecordingTask) throws Exception {
-        List<Stoppable> serviceThreadsToStop = new ArrayList<>();
-        List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
-        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread(listeningHost, listeningPort);
-
-        // Start background tasks
-        for (MonitoredBackgroundTask monitoredBackgroundTask:
-                Collections.singletonList(sourceCodeRecordingTask)) {
-            monitoredBackgroundTask.start();
-            serviceThreadsToStop.add(monitoredBackgroundTask);
-            monitoredSubjects.add(monitoredBackgroundTask);
-            externalEventServerThread.addNotifyListener(monitoredBackgroundTask);
-            externalEventServerThread.addStopListener(eventPayload -> monitoredBackgroundTask.signalStop());
-        }
-
-        // Start sync folder
-        UploadStatsProgressListener uploadStatsProgressListener = new UploadStatsProgressListener();
-        BackgroundRemoteSyncTask remoteSyncTask = new BackgroundRemoteSyncTask(
-                localStorageFolder, remoteDestination, uploadStatsProgressListener);
-        remoteSyncTask.scheduleSyncEvery(Duration.of(5, ChronoUnit.MINUTES));
-        monitoredSubjects.add(new UploadStatsProgressStatus(uploadStatsProgressListener));
-
-        // Start the metrics reporting
-        MetricsReportingTask metricsReportingTask = new MetricsReportingTask(monitoredSubjects);
-        metricsReportingTask.scheduleReportMetricsEvery(Duration.of(3, ChronoUnit.SECONDS));
-
-        // Start the health check thread
-        HealthCheckTask healthCheckTask = new HealthCheckTask(serviceThreadsToStop);
-        healthCheckTask.scheduleHealthCheckEvery(Duration.of(3, ChronoUnit.SECONDS));
-        externalEventServerThread.addStopListener(eventPayload -> healthCheckTask.cancel());
-
-        // Start the event server
-        externalEventServerThread.start();
-
-        // Wait for the stop signal and trigger a graceful shutdown
-        registerShutdownHook(serviceThreadsToStop, healthCheckTask);
-        for (Stoppable stoppable : serviceThreadsToStop) {
-            stoppable.join();
-        }
-        healthCheckTask.cancel();
-
-        // If all are joined, signal the event thread to stop
-        externalEventServerThread.signalStop();
-
-        // Finalise the upload and cancel tasks
-        forceLoggingFileRotation(localStorageFolder);
-        remoteSyncTask.finalRun();
-        metricsReportingTask.cancel();
-
-        // Join the event thread
-        externalEventServerThread.join();
-        log.warn("~~~~~~ Stopped ~~~~~~");
-        stopFileLogging();
-    }
-
-    private static void registerShutdownHook(List<Stoppable> servicesToStop, HealthCheckTask healthCheckTask) {
-        final Thread mainThread = Thread.currentThread();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            log.warn("Shutdown signal received - please wait for the upload to complete");
-            try {
-                for (Stoppable stoppable : servicesToStop) {
-                    stoppable.signalStop();
-                }
-                healthCheckTask.cancel();
-            } catch (Exception e) {
-                log.error("Error sending the stop signals.", e);
-            }
-
-            try {
-                mainThread.join();
-            } catch (InterruptedException e) {
-                log.error("Could not join main thread.  Stopping now.", e);
-            }
-        }, "Shutdown"));
-    }
 
     // ~~~~~ Helpers
-
-    private static void startFileLogging(String localStorageFolder) {
-        LoggerContext loggerContext = (LoggerContext) getILoggerFactory();
-        LockableFileLoggingAppender.addToContext(loggerContext, localStorageFolder);
-    }
-
-    private static void forceLoggingFileRotation(String localStorageFolder) {
-        stopFileLogging();
-        startFileLogging(localStorageFolder);
-    }
-
-    private static void stopFileLogging() {
-        LoggerContext loggerContext = (LoggerContext) getILoggerFactory();
-        LockableFileLoggingAppender.removeFromContext(loggerContext);
-    }
 
 
     private static void createMissingParentDirectories(String storageFolder) throws IOException {
@@ -340,21 +240,6 @@ public class TrackCodeAndUploadApp {
                     .forEach(File::delete);
         } catch (IOException e) {
             log.error("Failed to clean old locks", e);
-        }
-    }
-
-    public static void runS3SanityCheck() {
-        // Touch S3 to fail fast if the service is unreachable in this environment.
-        // Using anonymous creds mirrors the v1 “null creds” idea without needing real IAM.
-        try (S3Client s3 = S3Client.builder()
-                .region(Region.EU_WEST_2)
-                .credentialsProvider(AnonymousCredentialsProvider.create())
-                .build()) {
-
-            // Cheapest probe
-            s3.headBucket(HeadBucketRequest.builder()
-                    .bucket("ping.s3.accelerate.io")
-                    .build());
         }
     }
 

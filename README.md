@@ -48,6 +48,7 @@ Run the self-test on the generated jar file:
 java -jar track-code-and-upload/build/libs/track-code-and-upload-*-all.jar --run-self-test
 ```
 
+
 ### To build artifacts in Github
 
 Commit all changes then:
