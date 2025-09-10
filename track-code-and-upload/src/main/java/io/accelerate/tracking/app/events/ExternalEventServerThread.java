@@ -16,12 +16,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ExternalEventServerThread implements Stoppable {
-    private static final int PORT = 41375;
-    private Server server;
-    private List<ExternalEventListener> notifyListeners;
-    private List<ExternalEventListener> stopListeners;
+    private final Server server;
+    private final List<ExternalEventListener> notifyListeners;
+    private final List<ExternalEventListener> stopListeners;
 
-    public ExternalEventServerThread() {
+    public ExternalEventServerThread(String listeningHost, int listeningPort) {
         // Create the server
         QueuedThreadPool threadPool = new QueuedThreadPool(16, 1);
         threadPool.setName("ExEvent");
@@ -30,8 +29,8 @@ public class ExternalEventServerThread implements Stoppable {
 
         // Add the http connector
         ServerConnector http = new ServerConnector(server);
-        http.setHost("localhost");
-        http.setPort(PORT);
+        http.setHost(listeningHost);
+        http.setPort(listeningPort);
         server.addConnector(http);
 
         // Prepare listeners

@@ -26,7 +26,7 @@ public class LockableFileLoggingAppender<E> extends FileAppender<E> {
 
         // set the file name
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss"));
-        Path path = Paths.get(localStorageFolder, "record-and-upload-" + timestamp + ".log");
+        Path path = Paths.get(localStorageFolder, "track-code-and-upload-" + timestamp + ".log");
         fileAppender.setFile(path.toAbsolutePath().toString());
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(loggerContext);

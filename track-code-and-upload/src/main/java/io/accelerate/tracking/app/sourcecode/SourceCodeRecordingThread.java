@@ -42,7 +42,7 @@ public class SourceCodeRecordingThread extends Thread implements MonitoredBackgr
             sourceCodeRecorder.start(MAX_RECORDING_DURATION);
             sourceCodeRecorder.close();
         } catch (Exception e) {
-            log.error("SourceCode recorder encountered exception. Recording has been stopped.", e);
+            log.error("SourceCode tracking encountered exception. Tracking has been stopped.", e);
         }
     }
 

@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 public interface MonitoredSubject {
 
     /**
-     * Flag to indicate that the thread is actively doing work (recording/writing)
+     * Flag to indicate that the thread is actively doing work
      */
     boolean isActive();
 

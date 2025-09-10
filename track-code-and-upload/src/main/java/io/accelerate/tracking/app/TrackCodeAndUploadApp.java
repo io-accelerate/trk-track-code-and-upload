@@ -3,6 +3,8 @@ package io.accelerate.tracking.app;
 import ch.qos.logback.classic.LoggerContext;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterDescription;
+import com.beust.jcommander.ParameterException;
 import io.accelerate.tracking.app.upload.*;
 import io.accelerate.tracking.code.record.SourceCodeRecorder;
 import org.slf4j.Logger;
@@ -39,27 +41,40 @@ public class TrackCodeAndUploadApp {
     private static final int ONE_MB = 1024;
 
     private static class Params {
-        @Parameter(names = {"--store"}, description = "The folder that will store the recordings")
-        private String localStorageFolder = "./build/play/userX";
+        
+        //~~ Discovery  
+        
+        @Parameter(names = {"--help"}, help = true, description = "Displays help information")
+        private boolean help = false;
 
-        @Parameter(names = {"--config"}, description = "The file containing the AWS parameters")
-        private String configFile = ".private/aws-test-secrets";
+        //~~ Mandatory parameters
+        
+        @Parameter(names = {"--store"}, required = true, description = "The folder that will cache the code snapshots")
+        private String localStorageFolder;
 
-        @Parameter(names = {"--sourcecode"}, description = "The folder that contains the source code that needs to be tracked")
-        private String localSourceCodeFolder = ".";
+        @Parameter(names = {"--config"}, required = true, description = "The file containing the AWS parameters")
+        private String configFile;
+
+        @Parameter(names = {"--sourcecode"}, required = true, description = "The folder that contains the source code that needs to be tracked")
+        private String localSourceCodeFolder;
 
         //~~ Minimum requirements
 
         @Parameter(names = {"--minimum-required-diskspace-gb"}, description = "Minimum required diskspace (in GB) on the current volume (or drive) for the app to run")
         private long minimumRequiredDiskspaceInGB = 1;
 
+        //~~ Webserver params
+
+        @Parameter(names = {"--listening-host"}, description = "Listening host to be used for the event server")
+        private String listeningHost = "127.0.0.1";
+
+        @Parameter(names = {"--listening-port"}, description = "Listening port to be used for the event server")
+        private int listeningPort = 41375;
+        
         //~~ Graceful degradation flags
 
-        @Parameter(names = "--no-video", description = "Disable video recording")
-        private boolean doNotRecordVideo = false;
-
-        @Parameter(names = "--no-sourcecode", description = "Disable source code recording")
-        private boolean doNotRecordSourceCode = false;
+        @Parameter(names = "--no-sourcecode", description = "Disable source code tracking")
+        private boolean doNotTrackSourceCode = false;
 
         @Parameter(names = "--no-sync", description = "Do not sync target folder")
         private boolean doNotSync = false;
@@ -75,11 +90,25 @@ public class TrackCodeAndUploadApp {
 
 
     public static void main(String[] args) {
-        log.info("Starting recording app");
+        log.info("Starting the source code tracking app");
 
         Params params = new Params();
         JCommander jCommander = new JCommander(params);
-        jCommander.parse(args);
+        
+        // Parse the cli args
+        try {
+            jCommander.parse(args);
+        } catch (ParameterException e) {
+            log.error(e.getMessage());
+            printRequiredOnly(jCommander);
+            System.exit(2);
+        }
+
+        // Check if help is requested
+        if (params.help) {
+            jCommander.usage(); // Display the usage information
+            return; // Exit the application after showing help
+        }
 
         checkDiskspaceRequirements(params.minimumRequiredDiskspaceInGB);
 
@@ -119,7 +148,7 @@ public class TrackCodeAndUploadApp {
             String timestamp = LocalDateTime.now().format(fileTimestampFormatter);
 
             // Source code recording
-            boolean recordSourceCode = !params.doNotRecordSourceCode;
+            boolean recordSourceCode = !params.doNotTrackSourceCode;
             MonitoredBackgroundTask sourceCodeRecordingTask;
             if (recordSourceCode) {
                 Path sourceCodeFolder = Paths.get(params.localSourceCodeFolder);
@@ -134,6 +163,8 @@ public class TrackCodeAndUploadApp {
 
             // Start processing
             run(params.localStorageFolder,
+                    params.listeningHost,
+                    params.listeningPort, 
                     uploadDestination,
                     sourceCodeRecordingTask
             );
@@ -155,7 +186,14 @@ public class TrackCodeAndUploadApp {
     }
 
     private static void checkDiskspaceRequirements(long minimumRequiredDiskspaceHumanReadable) {
+        if (minimumRequiredDiskspaceHumanReadable == 0) {
+            // Exit early if we don't require any disk space
+            log.info("Skipping diskspace check and proceeding to run the app.");
+            return;
+        }
+        
         log.info("Checking diskspace");
+        
         long minimumRequiredDiskspace = minimumRequiredDiskspaceHumanReadable * ONE_GB;
         String userDirectory = System.getProperty("user.dir");
         String userDriveOrVolume = Paths.get(userDirectory).getRoot().toString();
@@ -164,8 +202,8 @@ public class TrackCodeAndUploadApp {
         float availableDiskspaceInMB = (float) (availableDiskspace / ONE_MB);
         log.info(String.format("Available disk space on the volume (or drive) '%s': %dGB (%.3fMB)", userDriveOrVolume, availableDiskspaceInGB, availableDiskspaceInMB));
         if (availableDiskspace < minimumRequiredDiskspace) {
-            log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the screen recording app.", minimumRequiredDiskspaceHumanReadable));
-            log.warn("Please make free up some disk space on this volume (or drive) and try running the screen recording app again.");
+            log.error(String.format("Sorry, you need at least %dGB of free disk space on this volume (or drive), in order to run the source code tracking app.", minimumRequiredDiskspaceHumanReadable));
+            log.warn("Please make free up some disk space on this volume (or drive) and try running the source code tracking app again.");
 
             System.exit(-1);
         }
@@ -185,11 +223,11 @@ public class TrackCodeAndUploadApp {
 
     private static final DateTimeFormatter fileTimestampFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
     private static void run(String localStorageFolder,
-                            RemoteDestination remoteDestination,
+                            String listeningHost, int listeningPort, RemoteDestination remoteDestination,
                             MonitoredBackgroundTask sourceCodeRecordingTask) throws Exception {
         List<Stoppable> serviceThreadsToStop = new ArrayList<>();
         List<MonitoredSubject> monitoredSubjects = new ArrayList<>();
-        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread();
+        ExternalEventServerThread externalEventServerThread = new ExternalEventServerThread(listeningHost, listeningPort);
 
         // Start background tasks
         for (MonitoredBackgroundTask monitoredBackgroundTask:
@@ -317,6 +355,16 @@ public class TrackCodeAndUploadApp {
             s3.headBucket(HeadBucketRequest.builder()
                     .bucket("ping.s3.accelerate.io")
                     .build());
+        }
+    }
+
+    private static void printRequiredOnly(JCommander jc) {
+        System.err.println("Required parameters:");
+        for (ParameterDescription pd : jc.getParameters()) {
+            if (pd.getParameter().required()) {
+                String names = String.join(", ", pd.getParameter().names());
+                System.err.printf("  %-20s %s%n", names, pd.getDescription());
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ ext {
 }
 
 dependencies {
-    implementation ('io.accelerate:track-code:0.0.37')
+    implementation ('io.accelerate:track-code:0.0.38')
     implementation ('io.accelerate:sync-to-s3:0.0.27')
 
     implementation('software.amazon.awssdk:s3:'+awsSdkVersion)

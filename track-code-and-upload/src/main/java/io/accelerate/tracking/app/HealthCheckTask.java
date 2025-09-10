@@ -25,7 +25,7 @@ class HealthCheckTask {
             public void run() {
                 try {
                     if (!allServiceThreadsAlive()) {
-                        log.warn("One or more recording threads are not running correctly. Stopping all threads.");
+                        log.warn("One or more threads are not running correctly. Stopping all threads.");
                         stopAllThreads();
                     }
                 } catch (Exception e) {
