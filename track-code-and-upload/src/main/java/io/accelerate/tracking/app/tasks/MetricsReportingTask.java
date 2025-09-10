@@ -1,4 +1,4 @@
-package io.accelerate.tracking.app;
+package io.accelerate.tracking.app.tasks;
 
 import org.slf4j.Logger;
 
@@ -9,21 +9,21 @@ import java.util.TimerTask;
 
 import static org.slf4j.LoggerFactory.*;
 
-class MetricsReportingTask {
+public class MetricsReportingTask {
     private static final Logger log = getLogger(MetricsReportingTask.class);
     private final Timer metricsTimer;
     private final StringBuilder displayBuffer;
     private final List<MonitoredSubject> monitoredSubjects;
     private int tick;
 
-    MetricsReportingTask(List<MonitoredSubject> monitoredSubjects) {
+    public MetricsReportingTask(List<MonitoredSubject> monitoredSubjects) {
         this.metricsTimer = new Timer("Metrics");
         this.displayBuffer = new StringBuilder();
         this.monitoredSubjects = monitoredSubjects;
         this.tick = 0;
     }
 
-    void scheduleReportMetricsEvery(Duration delayBetweenRuns) {
+    public void scheduleReportMetricsEvery(Duration delayBetweenRuns) {
         metricsTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -60,7 +60,7 @@ class MetricsReportingTask {
         log.info(displayBuffer.toString());
     }
 
-    void cancel() {
+    public void cancel() {
         metricsTimer.cancel();
     }
 }

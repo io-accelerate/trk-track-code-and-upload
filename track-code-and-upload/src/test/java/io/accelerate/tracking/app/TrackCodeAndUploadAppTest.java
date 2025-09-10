@@ -41,8 +41,10 @@ public class TrackCodeAndUploadAppTest {
 
         public void run() {
             TrackCodeAndUploadApp.main(new String[]{
+                    "track-and-upload", 
                     "--store", storageDirPath,
-                    "--no-video", "--no-sourcecode", "--no-sync",
+                    "--sourcecode", "none",
+                    "--config", "none",
                     "--soft-stop"
             });
         }

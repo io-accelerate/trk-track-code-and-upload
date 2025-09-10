@@ -1,4 +1,4 @@
-package io.accelerate.tracking.app;
+package io.accelerate.tracking.app.tasks;
 
 public interface Stoppable {
 

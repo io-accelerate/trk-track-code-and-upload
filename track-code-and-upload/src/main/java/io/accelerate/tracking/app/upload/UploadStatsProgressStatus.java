@@ -1,7 +1,7 @@
 package io.accelerate.tracking.app.upload;
 
 import org.slf4j.Logger;
-import io.accelerate.tracking.app.MonitoredSubject;
+import io.accelerate.tracking.app.tasks.MonitoredSubject;
 import io.accelerate.tracking.sync.sync.progress.UploadStatsProgressListener;
 
 import java.text.NumberFormat;

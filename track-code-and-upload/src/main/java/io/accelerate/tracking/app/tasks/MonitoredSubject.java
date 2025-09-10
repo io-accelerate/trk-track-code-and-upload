@@ -1,4 +1,4 @@
-package io.accelerate.tracking.app;
+package io.accelerate.tracking.app.tasks;
 
 import org.slf4j.Logger;
 

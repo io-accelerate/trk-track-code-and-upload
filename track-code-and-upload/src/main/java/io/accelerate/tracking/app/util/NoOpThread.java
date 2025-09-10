@@ -1,7 +1,7 @@
 package io.accelerate.tracking.app.util;
 
 import org.slf4j.Logger;
-import io.accelerate.tracking.app.MonitoredBackgroundTask;
+import io.accelerate.tracking.app.tasks.MonitoredBackgroundTask;
 
 public class NoOpThread extends Thread implements MonitoredBackgroundTask {
     private boolean isRunning;

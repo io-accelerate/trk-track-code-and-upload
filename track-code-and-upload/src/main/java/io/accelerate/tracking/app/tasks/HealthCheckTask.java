@@ -1,4 +1,4 @@
-package io.accelerate.tracking.app;
+package io.accelerate.tracking.app.tasks;
 
 import org.slf4j.Logger;
 
@@ -9,17 +9,17 @@ import java.util.TimerTask;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-class HealthCheckTask {
+public class HealthCheckTask {
     private static final Logger log = getLogger(HealthCheckTask.class);
     private final Timer metricsTimer;
     private final List<Stoppable> serviceThreads;
 
-    HealthCheckTask(List<Stoppable> recordingThreads) {
+    public HealthCheckTask(List<Stoppable> recordingThreads) {
         this.metricsTimer = new Timer("HealthCheck");
         this.serviceThreads = recordingThreads;
     }
 
-    void scheduleHealthCheckEvery(Duration delayBetweenRuns) {
+    public void scheduleHealthCheckEvery(Duration delayBetweenRuns) {
         metricsTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -53,7 +53,7 @@ class HealthCheckTask {
         });
     }
 
-    void cancel() {
+    public void cancel() {
         log.info("Stopping health check timer");
         metricsTimer.cancel();
     }

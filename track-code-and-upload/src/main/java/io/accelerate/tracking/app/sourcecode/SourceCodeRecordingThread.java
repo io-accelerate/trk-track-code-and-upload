@@ -5,7 +5,7 @@ import io.accelerate.tracking.code.content.CopyFromDirectorySourceCodeProvider;
 import io.accelerate.tracking.code.metrics.SourceCodeRecordingMetricsCollector;
 import io.accelerate.tracking.code.record.SourceCodeRecorder;
 import io.accelerate.tracking.code.time.SystemMonotonicTimeSource;
-import io.accelerate.tracking.app.MonitoredBackgroundTask;
+import io.accelerate.tracking.app.tasks.MonitoredBackgroundTask;
 
 import java.nio.file.Path;
 import java.time.Duration;
