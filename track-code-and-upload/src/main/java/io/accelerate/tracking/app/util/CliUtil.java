@@ -68,7 +68,7 @@ public final class CliUtil {
             String desc = getCommandDescription(commander, name);
             System.err.printf("  %-20s %s%n", name, desc);
         });
-        System.err.println("Use 'help <command>' for details.");
+        System.err.println("Use '<command> --help' for details.");
     }
 
     private static String getCommandDescription(JCommander root, String name) {
