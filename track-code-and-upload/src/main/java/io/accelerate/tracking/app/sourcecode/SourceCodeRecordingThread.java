@@ -22,7 +22,7 @@ public class SourceCodeRecordingThread extends Thread implements MonitoredBackgr
     private final SourceCodeRecordingStatus sourceCodeRecordingStatus;
 
     public SourceCodeRecordingThread(Path sourceCodeFolder, Path sourceCodeRecordingFile) {
-        super("SourceRec");
+        super("SourceTrk");
 
         SourceCodeRecordingMetricsCollector sourceCodeRecordingMetricsCollector = new SourceCodeRecordingMetricsCollector();
         sourceCodeRecordingStatus = new SourceCodeRecordingStatus(sourceCodeRecordingMetricsCollector);
