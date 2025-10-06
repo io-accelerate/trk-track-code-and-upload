@@ -5,3 +5,5 @@ classes
 build
 .private
 out
+.terraform
+.terraformx
