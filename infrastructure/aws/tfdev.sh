@@ -9,6 +9,10 @@ fi
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
 
+# Use an environment-specific data dir to keep local state separate
+export TF_DATA_DIR="$DIR/.terraform-dev"
+mkdir -p "$TF_DATA_DIR"
+
 GRADLE_VERSION=$(grep '^version=' ../../gradle.properties | cut -d'=' -f2)
 export TF_VAR_lambda_version="$GRADLE_VERSION"
 export TF_VAR_environment="dev"
