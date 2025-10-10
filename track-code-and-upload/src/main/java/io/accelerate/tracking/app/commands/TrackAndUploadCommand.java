@@ -37,7 +37,10 @@ public class TrackAndUploadCommand implements HasHelp {
 
     @Parameter(names = {"-h", "--help"}, help = true, description = "Show help for this command")
     private boolean help;
-    
+
+    @Parameter(names = {"--debug"}, description = "Enable verbose debug output")
+    private boolean debug = false;
+
     //~~ Mandatory parameters
 
     @Parameter(names = {"--store"}, required = true, description = "The folder that will cache the code snapshots")
@@ -136,7 +139,11 @@ public class TrackAndUploadCommand implements HasHelp {
             log.info("Stop S3 Sync session");
             uploadDestination.stopS3SyncSession();
         } catch (DestinationOperationException e) {
-            log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
+            if (debug) {
+                log.error("User does not have enough permissions to upload.", e);
+            } else {
+                log.error("User does not have enough permissions to upload. Reason: {}", e.getMessage());
+            }
         } catch (Exception e) {
             log.error("Exception encountered. Stopping now.", e);
         } finally {
