@@ -44,8 +44,8 @@ public class UploadStatsProgressStatus implements MonitoredSubject {
                 displayBuffer.append(
                         String.format("Uploaded %3s of %3s MB at %5s MB/sec",
                                 percentageFormatter.format(fileUploadStat.getUploadRatio()),
-                                sizeFormatter.format(bytes_to_mb(fileUploadStat.getTotalSize())),
-                                uploadSpeedFormatter.format(fileUploadStat.getMBps()))
+                                sizeFormatter.format(bytes_to_mb(fileUploadStat.getTotalBytes())),
+                                uploadSpeedFormatter.format(fileUploadStat.getMegabytesPerSecond()))
                 )
         );
     }
